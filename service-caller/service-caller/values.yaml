@@ -1,0 +1,7 @@
+image:
+  repository: curlimages/curl
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+nameOverride: ""
+fullnameOverride: ""

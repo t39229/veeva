@@ -1,0 +1,23 @@
+replicaCount: 1
+
+image:
+  repository: nginx
+  tag: "1.21.0"
+  pullPolicy: IfNotPresent
+
+service:
+  type: NodePort
+  port: 80
+
+environment:
+  NGINX_PORT: "80"
+  NGINX_HOST: "localhost"
+
+secrets:
+  BASIC_AUTH_USER: admin
+  BASIC_AUTH_PASS: changeme
+
+ingress:
+  enabled: true
+  className: nginx
+  host: nginx.local

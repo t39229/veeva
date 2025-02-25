@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nginx-web.fullname" . }}-config
+data:
+  index.html: |
+    {{- .Files.Get "files/index.html" | nindent 4 }}
+  nginx.conf: |
+    server {
+        listen {{ .Values.environment.NGINX_PORT }};
+        server_name {{ .Values.environment.NGINX_HOST }};
+        
+        location / {
+            root /usr/share/nginx/html;
+            index index.html;
+        }
+    }

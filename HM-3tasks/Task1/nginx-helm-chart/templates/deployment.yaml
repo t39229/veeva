@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nginx.fullname" . }}
+  labels:
+    {{- include "nginx.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "nginx.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "nginx.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          env:
+            {{- range .Values.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+          {{- if .Values.secrets.basicAuth.enabled }}
+          envFrom:
+            - secretRef:
+                name: {{ include "nginx.fullname" . }}-auth
+          {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /usr/share/nginx/html
+            {{- if .Values.volumes.persistentVolume.enabled }}
+            - name: data
+              mountPath: /var/www/html
+            {{- end }}
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ include "nginx.fullname" . }}-config
+        {{- if .Values.volumes.persistentVolume.enabled }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "nginx.fullname" . }}-pvc
+        {{- end }}

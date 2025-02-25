@@ -1,0 +1,26 @@
+controller:
+  kind: Deployment
+  replicaCount: 1
+  ingressClassResource:
+    name: nginx-custom  # Change from "nginx" to a custom name
+    enabled: true
+  service:
+    type: LoadBalancer
+    externalTrafficPolicy: Local
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  metrics:
+    enabled: true
+    service:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "10254"
+  config:
+    use-forwarded-headers: "true"
+    compute-full-forwarded-for: "true"
+    use-proxy-protocol: "false"

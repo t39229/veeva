@@ -1,0 +1,33 @@
+# Default values for the NGINX Caller Helm chart
+
+replicaCount: 1
+
+image:
+  repository: curlimages/curl
+  tag: "7.81.0"
+  pullPolicy: IfNotPresent
+
+# Configuration for the caller script
+caller:
+  # Target URL to call (updated to use the Ingress host)
+  # For in-cluster calls, we can still use the service directly
+  targetUrl: "http://nginx-release-nginx"
+  # For testing the Ingress, uncomment the below line (requires DNS setup or /etc/hosts modification)
+  # targetUrl: "http://nginx.example.com"
+  # Optional: Add a Host header for ingress routing without DNS setup
+  useHostHeader: true
+  hostHeader: "nginx.example.com"
+  # Interval between calls in seconds
+  interval: 5
+  # Whether to log the response content
+  logResponse: true
+  # Additional curl options
+  curlOptions: "-s -o /dev/null -w \"Status: %{http_code}, Time: %{time_total}s, Size: %{size_download} bytes\""
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi

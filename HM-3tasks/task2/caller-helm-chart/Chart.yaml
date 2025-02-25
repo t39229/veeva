@@ -1,0 +1,6 @@
+apiVersion: v2
+name: nginx-caller
+description: A Helm chart for a microservice that calls NGINX web page
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

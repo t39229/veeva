@@ -1,0 +1,4 @@
+Service Caller has been deployed.
+
+To check the logs, run:
+  kubectl logs -f $(kubectl get pods -l app.kubernetes.io/name=service-caller -o jsonpath='{.items[0].metadata.name}')

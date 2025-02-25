@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nginx-caller.fullname" . }}-script
+  labels:
+    {{- include "nginx-caller.labels" . | nindent 4 }}
+data:
+  caller.sh: |-
+    #!/bin/sh
+    
+    TARGET_URL="{{ .Values.caller.targetUrl }}"
+    INTERVAL="{{ .Values.caller.interval }}"
+    CURL_OPTIONS="{{ .Values.caller.curlOptions }}"
+    LOG_RESPONSE={{ .Values.caller.logResponse }}
+    USE_HOST_HEADER={{ .Values.caller.useHostHeader }}
+    HOST_HEADER="{{ .Values.caller.hostHeader }}"
+    
+    echo "Starting NGINX caller service"
+    echo "Target URL: $TARGET_URL"
+    echo "Call interval: $INTERVAL seconds"
+    
+    # Check if we should use a Host header for Ingress routing
+    if [ "$USE_HOST_HEADER" = "true" ]; then
+      echo "Using Host header: $HOST_HEADER"
+      HOST_OPTION="-H \"Host: $HOST_HEADER\""
+    else
+      HOST_OPTION=""
+    fi
+    
+    # Function to make the HTTP request
+    make_request() {
+      echo "$(date +'%Y-%m-%d %H:%M:%S') - Calling $TARGET_URL"
+      
+      if [ "$LOG_RESPONSE" = "true" ]; then
+        # Get and log the response
+        if [ -n "$HOST_OPTION" ]; then
+          RESPONSE=$(curl -H "Host: $HOST_HEADER" $TARGET_URL)
+        else
+          RESPONSE=$(curl $TARGET_URL)
+        fi
+        CURL_STATUS=$?
+        
+        if [ $CURL_STATUS -eq 0 ]; then
+          echo "Response: $(echo "$RESPONSE" | head -n 10) [truncated if longer]"
+          # Get stats with a separate curl call
+          if [ -n "$HOST_OPTION" ]; then
+            curl -H "Host: $HOST_HEADER" $CURL_OPTIONS $TARGET_URL
+          else
+            curl $CURL_OPTIONS $TARGET_URL
+          fi
+          echo ""
+        else
+          echo "Error: curl failed with status $CURL_STATUS"
+        fi
+      else
+        # Just log the stats
+        if [ -n "$HOST_OPTION" ]; then
+          curl -H "Host: $HOST_HEADER" $CURL_OPTIONS $TARGET_URL
+        else
+          curl $CURL_OPTIONS $TARGET_URL
+        fi
+        echo ""
+      fi
+    }
+    
+    # Main loop
+    while true; do
+      make_request
+      sleep $INTERVAL
+    done
